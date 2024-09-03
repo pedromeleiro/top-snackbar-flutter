@@ -155,6 +155,8 @@ class _TopSnackBarState extends State<_TopSnackBar> with SingleTickerProviderSta
 
   late final Tween<Offset> _offsetTween;
 
+  bool _onTapCalled = false;
+
   @override
   void initState() {
     _animationController = AnimationController(
@@ -180,7 +182,7 @@ class _TopSnackBarState extends State<_TopSnackBar> with SingleTickerProviderSta
 
     widget.onAnimationControllerInit?.call(_animationController);
 
-    switch(widget.snackBarPosition) {
+    switch (widget.snackBarPosition) {
       case SnackBarPosition.top:
         _offsetTween = Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero);
         break;
@@ -237,7 +239,10 @@ class _TopSnackBarState extends State<_TopSnackBar> with SingleTickerProviderSta
       case DismissType.onTap:
         return TapBounceContainer(
           onTap: () {
-            widget.onTap?.call();
+            if (!_onTapCalled) {
+              widget.onTap?.call();
+              _onTapCalled = true;
+            }
             if (!widget.persistent && mounted) {
               _animationController.reverse();
             }
@@ -264,7 +269,20 @@ class _TopSnackBarState extends State<_TopSnackBar> with SingleTickerProviderSta
             child: childWidget,
           );
         }
-        return childWidget;
+        return TapBounceContainer(
+          onTap: widget.onTap != null
+              ? () {
+                  if (!_onTapCalled) {
+                    widget.onTap?.call();
+                    _onTapCalled = true;
+                  }
+                  if (!widget.persistent && mounted) {
+                    _animationController.reverse();
+                  }
+                }
+              : null,
+          child: childWidget,
+        );
       case DismissType.none:
         return widget.child;
     }
